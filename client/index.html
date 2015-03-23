@@ -2,9 +2,9 @@
 <html>
   <head>
     <title>Just do it!</title>
-    <script src="bower_components/react/react.min.js"></script>
-    <script src="bower_components/react/JSXTransformer.js"></script>
-    <script src="https://code.jquery.com/jquery-1.10.0.min.js"></script>
+    <script src="components/react/react.min.js"></script>
+    <script src="components/react/JSXTransformer.js"></script>
+    <script src="components/jquery/dist/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/0.3.1/showdown.min.js"></script>
     <link rel="shortcut icon" href="icon.ico" type="image/x-icon">
   </head>
@@ -12,11 +12,11 @@
     <div id="content"></div>
     <script type="text/jsx;harmony=true">
 
-      var CommentBox = React.createClass({
+      var TaskBox = React.createClass({
         getInitialState: function() {
           return {data : []};
         },
-        loadCommentsFromServer: function() {
+        loadTasksFromServer: function() {
           $.ajax({
             url: this.props.url,
             dataType: 'json',
@@ -28,15 +28,15 @@
             }.bind(this)
           });
         },
-        handleCommentSubmit: function(comment) {
-          var comments = this.state.data;
-          var newComments = comments.concat([comment]);
-          this.setState({data: newComments});
+        handleTaskSubmit: function(task) {
+          var tasks = this.state.data;
+          var newTasks = tasks.concat([task]);
+          this.setState({data: newTasks});
           $.ajax({
             url: this.props.url,
             dataType: 'json',
             type: 'POST',
-            data: comment,
+            data: task,
             success: function(data) {
               this.setState({data: data});
             }.bind(this),
@@ -46,71 +46,66 @@
           });
         },
         componentDidMount: function() {
-          this.loadCommentsFromServer();
-          setInterval(this.loadCommentsFromServer, this.props.pollInterval);
+          this.loadTasksFromServer();
+          setInterval(this.loadTasksFromServer, this.props.pollInterval);
         },
         render: function() {
           return (
-            <div className="commentBox">
-              <h1>Comments</h1>
-              <CommentList data={this.state.data}/>
-              <CommentForm onCommentSubmit={this.handleCommentSubmit}/>
+            <div className="TaskBox">
+              <h1>Tasks</h1>
+              <TaskList data={this.state.data}/>
+              <TaskForm onTaskSubmit={this.handleTaskSubmit}/>
             </div>
           );
         }
       });
       
-      var CommentList = React.createClass({
+      var TaskList = React.createClass({
         render: function() {
-          var commentNodes = this.props.data.map(function(comment) {
+          var taskNodes = this.props.data.map(function(task) {
             return (
-              <Comment author={comment.author}>
-                {comment.text}
-              </Comment>
+              <Task>
+                {task.text}
+              </Task>
             )
           });
           return (
-            <div className="commentList">
-              {commentNodes}
+            <div className="taskList">
+              {taskNodes}
             </div>
           );
         }
       });
 
 
-      var CommentForm = React.createClass({
+      var TaskForm = React.createClass({
         handleSubmit: function(e) {
           e.preventDefault();
-          var author = React.findDOMNode(this.refs.author).value.trim();
           var text = React.findDOMNode(this.refs.text).value.trim();
-          if(!text || !author) {
+          if(!text) {
             return;
           }
-          this.props.onCommentSubmit({author: author, text: text});
-          React.findDOMNode(this.refs.author).value = '';
+          this.props.onTaskSubmit({text: text});
           React.findDOMNode(this.refs.text).value = '';
           return;
         },
         render: function() {
           return (
-            <form className="commentForm" onSubmit={this.handleSubmit}>
-              <input type="text" placeholder="Your name" ref="author"/>
-              <input type="text" placeholder="Your comment" ref="text"/>
-              <input type="submit" value="Post" />
+            <form className="taskForm" onSubmit={this.handleSubmit}>
+              <input type="checkbox" />
+              <input type="text" placeholder="Do it!" ref="text"/>
+              <input type="submit" value="Queue it" />
             </form>
           );
         }
       });
 
       var converter = new Showdown.converter();
-      var Comment = React.createClass({
+      var Task = React.createClass({
         render: function() {
           var rawMarkup = converter.makeHtml(this.props.children.toString());
           return (
-            <div className="comment">
-              <h2 className="commentAuthor">
-                {this.props.author}
-              </h2>
+            <div className="task">
               <span dangerouslySetInnerHTML={{__html: rawMarkup}} />
             </div>
           );
@@ -118,7 +113,7 @@
       });
 
       React.render(
-        <CommentBox url="comments.json" pollInterval={2000} />, 
+        <TaskBox url="tasks.json" pollInterval={2000} />, 
         document.getElementById('content')
       );
 

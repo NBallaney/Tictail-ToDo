@@ -54,4 +54,4 @@ docs/_build/
 target/
 
 .DS_Store
-bower_components
+components
